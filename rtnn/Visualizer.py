@@ -1,5 +1,5 @@
 from . import Layers as L
-from . import network # as Net
+# from . import network # as Net
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,7 +16,7 @@ def visualizeNeuronPotentials(network, neuronHistory):
 
     t = np.linspace(0, len(neuronHistory), len(neuronHistory))
     fig, axs = plt.subplots(numberLayers, maxNeuronsPerLayer,
-                            sharex='all', sharey='all', figsize=(maxNeuronsPerLayer*4, numberLayers*4))
+                            sharex='all', sharey='all', figsize=(maxNeuronsPerLayer, numberLayers))
 
     for layerIx, layer in enumerate(network.layers):
         for neuronId in range(numNeurons[layerIx,1]):
@@ -69,7 +69,7 @@ def visualizeSynapseMatrix(synapseMatrixHistory, title=""):
     acceptedTransmitterCounts = np.zeros((noPre, noPost, len(synapseMatrixHistory)))
 
     t = np.linspace(0, len(synapseMatrixHistory), len(synapseMatrixHistory))
-    fig, axs = plt.subplots(noPre, noPost, sharex='all', sharey='all', figsize=(noPost*4, noPre*4))
+    fig, axs = plt.subplots(noPre, noPost, sharex='all', sharey='all', figsize=(noPost, noPre))
 
     fig.suptitle(title)
 
@@ -211,7 +211,7 @@ def visualiseLearningSignalHistory(networkHistory, calculations, timePerCalculat
     next(iterLayers)  # skipping the first layer
     for layerId, layer in enumerate(iterLayers):
         cs = np.linspace((int(-calculations / 2)), int(calculations / 2), calculations)
-        fig, axs = plt.subplots(3, 1, sharex='col', figsize=(3*4, 3*4))
+        fig, axs = plt.subplots(3, 1, sharex='col', figsize=(3, 3))
 
         # ----
         axs[0].set_title('Excitatory Learning Signals')
