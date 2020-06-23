@@ -41,8 +41,14 @@ class Network():
                 #print('Bias Dict exists')
                 if layer in layerBiasDict:
                 #    print(layer, ' in Bias Dict')
-                    excitatoryBias, inhibitoryBias = layerBiasDict[layer]
-                    layer.step(preneurons, learning, excitatoryBias, inhibitoryBias, ignorePreneurons)
+                    if (isinstance(layer, L.DuoLateralInhibitoryLayer)):
+                        excitatoryBias, inhibitoryBias = layerBiasDict[layer]
+                        layer.step(preneurons, learning, excitatoryBias, inhibitoryBias, ignorePreneurons)
+                    if (isinstance(layer, L.ExcitatoryLateralInhibitoryLayer)):
+                        excitatoryBias, inhibitoryBias = layerBiasDict[layer]
+                        # Inhibitory bias is irrelevant in this context. This could be clarified.
+                        layer.step(preneurons, learning, excitatoryBias, ignorePreneurons)
+
                 else:
                     layer.step(preneurons, learning)
             else:

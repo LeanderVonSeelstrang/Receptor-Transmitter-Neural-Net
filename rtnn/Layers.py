@@ -5,6 +5,34 @@ from . import synapse as s
 
 from . import errors as err
 
+from . import hyperparameters as hyperparameters
+
+# synapse matrix hyperparameters
+
+EXCITATORY_RECEPTOR_VARIANCE = hyperparameters.EXCITATORY_RECEPTOR_VARIANCE #12
+EXCITATORY_RECEPTOR_COUNT = hyperparameters.EXCITATORY_RECEPTOR_COUNT #1200
+EXCITATORY_TRANSMITTER_VARIANCE = hyperparameters.EXCITATORY_TRANSMITTER_VARIANCE #9
+EXCITATORY_TRANSMITTER_COUNT = hyperparameters.EXCITATORY_TRANSMITTER_COUNT #5000
+
+LATERAL_INHIBITORY_RECEPTOR_VARIANCE = hyperparameters.LATERAL_INHIBITORY_RECEPTOR_VARIANCE #7
+LATERAL_INHIBITORY_RECEPTOR_COUNT = hyperparameters.LATERAL_INHIBITORY_RECEPTOR_COUNT #1830
+LATERAL_INHIBITORY_TRANSMITTER_VARIANCE = hyperparameters.LATERAL_INHIBITORY_TRANSMITTER_VARIANCE #16
+LATERAL_INHIBITORY_TRANSMITTER_COUNT = hyperparameters.LATERAL_INHIBITORY_TRANSMITTER_COUNT #3510
+
+INHIBITORY_RECEPTOR_VARIANCE = hyperparameters.INHIBITORY_RECEPTOR_VARIANCE #14
+INHIBITORY_RECEPTOR_COUNT = hyperparameters.INHIBITORY_RECEPTOR_COUNT #1200
+INHIBITORY_TRANSMITTER_VARIANCE = hyperparameters.INHIBITORY_TRANSMITTER_VARIANCE #8
+INHIBITORY_TRANSMITTER_COUNT = hyperparameters.INHIBITORY_TRANSMITTER_COUNT #3500
+
+
+
+# basically irrelevant - just to ensure definition
+VARIANCE_RECEPTOR_COUNT = 10
+EXPECTED_RECEPTOR_COUNT = 1200
+VARIANCE_TRANSMITTER_COUNT = 10
+EXPECTED_TRANSMITTER_COUNT = 3000
+
+
 # Initializes a vector of neurons in one layer
 def initLayer(numberOfNeurons):
     neurons = []
@@ -76,8 +104,10 @@ class InputLayer:
 
 # Initializes a matrix of synapses fully connecting two layers of neurons
 def initFullyConnectedLayer(preNeurons, postNeurons,
-                            expectedMaximalTransmitterCount0=3000,varianceMaximalTransmitterCount0=10,
-                            expectedMaximalRezeptorCount0=1200, varianceMaximalRezeptorCount0=10,
+                            expectedMaximalTransmitterCount0=EXPECTED_TRANSMITTER_COUNT,
+                            varianceMaximalTransmitterCount0=VARIANCE_TRANSMITTER_COUNT,
+                            expectedMaximalRezeptorCount0=EXPECTED_RECEPTOR_COUNT,
+                            varianceMaximalRezeptorCount0=VARIANCE_RECEPTOR_COUNT,
                             defaultReleasePercentage=None):
         synapseMatrix = np.full((len(preNeurons), len(postNeurons)), s.Synapse())
         # each synapse needs to be generated on its own to get an unambiguous address
@@ -92,8 +122,10 @@ def initFullyConnectedLayer(preNeurons, postNeurons,
 
 class SynapseMatrix:
     def __init__(self, preneurons, postneurons,
-                 expectedMaximalTransmitterCount0=3000, varianceMaximalTransmitterCount0=100,
-                 expectedMaximalRezeptorCount0=1200, varianceMaximalRezeptorCount0=100):
+                 expectedMaximalTransmitterCount0=EXPECTED_TRANSMITTER_COUNT,
+                 varianceMaximalTransmitterCount0=VARIANCE_TRANSMITTER_COUNT,
+                 expectedMaximalRezeptorCount0=EXPECTED_RECEPTOR_COUNT,
+                 varianceMaximalRezeptorCount0=VARIANCE_RECEPTOR_COUNT):
         self.synapseMatrix = initFullyConnectedLayer(preneurons, postneurons,
                                                      expectedMaximalTransmitterCount0, varianceMaximalTransmitterCount0,
                                                      expectedMaximalRezeptorCount0, varianceMaximalRezeptorCount0)
@@ -178,13 +210,24 @@ class SynapseMatrix:
 
 
 
-class LateralInhibitoryLayer:
-    def __init__(self, numberOfPostneurons, excitatoryTransmitterExpectation=5000, excitatoryTransmitterVariance=10,
-              excitatoryReceptorExpectation=1500, excitatoryReceptorVariance=10,
-              inhibitoryTransmitterExpectation=3500, inhibitoryTransmitterVariance=10,
-              inhibitoryReceptorExpectation=1200, inhibitoryReceptorVariance=10,
-              lateralInhibitoryTransmitterExpectation=3500, lateralInhibitoryTransmitterVariance=10,
-              lateralInhibitoryReceptorExpectation=1200, lateralInhibitoryReceptorVariance=10):
+class DuoLateralInhibitoryLayer:
+    '''
+    This fully connected layer allows to transmit both an excitatory and an inhibitory forward signal simultaneously.
+    The receiving layer performs lateral inhibition afterwards.
+    '''
+    def __init__(self, numberOfPostneurons,
+                 excitatoryTransmitterExpectation=EXCITATORY_TRANSMITTER_COUNT,
+                 excitatoryTransmitterVariance=EXCITATORY_TRANSMITTER_VARIANCE,
+                 excitatoryReceptorExpectation=EXCITATORY_RECEPTOR_COUNT,
+                 excitatoryReceptorVariance=EXCITATORY_RECEPTOR_VARIANCE,
+                 inhibitoryTransmitterExpectation=INHIBITORY_TRANSMITTER_COUNT,
+                 inhibitoryTransmitterVariance=INHIBITORY_TRANSMITTER_VARIANCE,
+                 inhibitoryReceptorExpectation=INHIBITORY_RECEPTOR_COUNT,
+                 inhibitoryReceptorVariance=INHIBITORY_RECEPTOR_VARIANCE,
+                 lateralInhibitoryTransmitterExpectation=LATERAL_INHIBITORY_TRANSMITTER_COUNT,
+                 lateralInhibitoryTransmitterVariance=LATERAL_INHIBITORY_TRANSMITTER_VARIANCE,
+                 lateralInhibitoryReceptorExpectation=LATERAL_INHIBITORY_RECEPTOR_COUNT,
+                 lateralInhibitoryReceptorVariance=LATERAL_INHIBITORY_RECEPTOR_VARIANCE):
         self.postneurons = Layer(numberOfPostneurons)
         self.lateralInhibitoryMatrix = SynapseMatrix(self.postneurons, self.postneurons,
                                                      expectedMaximalTransmitterCount0=lateralInhibitoryTransmitterExpectation,
@@ -290,6 +333,111 @@ class LateralInhibitoryLayer:
             self.postneurons[postNeuronIndex] = pivotNeuron.step(postExitoryPotential, postInhibitoryPotential)
         # self.postneurons is the input for the next layer
         return self
+
+
+
+
+class ExcitatoryLateralInhibitoryLayer:
+    '''
+    This fully connected layer allows to transmit only an excitatory forward signal.
+    The receiving layer performs lateral inhibition afterwards.
+    '''
+    def __init__(self, numberOfPostneurons, excitatoryTransmitterExpectation=EXCITATORY_TRANSMITTER_COUNT,
+                 excitatoryTransmitterVariance=EXCITATORY_TRANSMITTER_VARIANCE,
+                 excitatoryReceptorExpectation=EXCITATORY_RECEPTOR_COUNT,
+                 excitatoryReceptorVariance=EXCITATORY_RECEPTOR_VARIANCE,
+                 lateralInhibitoryTransmitterExpectation=LATERAL_INHIBITORY_TRANSMITTER_COUNT,
+                 lateralInhibitoryTransmitterVariance=LATERAL_INHIBITORY_TRANSMITTER_VARIANCE,
+                 lateralInhibitoryReceptorExpectation=LATERAL_INHIBITORY_RECEPTOR_COUNT,
+                 lateralInhibitoryReceptorVariance=LATERAL_INHIBITORY_RECEPTOR_VARIANCE):
+        self.postneurons = Layer(numberOfPostneurons)
+        self.lateralInhibitoryMatrix = SynapseMatrix(self.postneurons, self.postneurons,
+                                                     expectedMaximalTransmitterCount0=lateralInhibitoryTransmitterExpectation,
+                                                     varianceMaximalTransmitterCount0=lateralInhibitoryTransmitterVariance,
+                                                     expectedMaximalRezeptorCount0=lateralInhibitoryReceptorExpectation,
+                                                     varianceMaximalRezeptorCount0=lateralInhibitoryReceptorVariance)
+        self.lateralInhibitoryMatrix.asLateralInhibitionMatrix()
+
+        self.buildParameters = np.array([excitatoryTransmitterExpectation, excitatoryTransmitterVariance,
+              excitatoryReceptorExpectation, excitatoryReceptorVariance])
+
+    # build is basically the second part of the __init__ method, but we can call it later,
+    # when we know what input the layer receives
+    def build(self, inputLayer):
+        excitatoryTransmitterExpectation, excitatoryTransmitterVariance,\
+        excitatoryReceptorExpectation, excitatoryReceptorVariance = self.buildParameters
+        self.excitatoryMatrix = SynapseMatrix(inputLayer, self.postneurons,
+                                              expectedMaximalTransmitterCount0=excitatoryTransmitterExpectation,
+                                              varianceMaximalTransmitterCount0=excitatoryTransmitterVariance,
+                                              expectedMaximalRezeptorCount0=excitatoryReceptorExpectation,
+                                              varianceMaximalRezeptorCount0=excitatoryReceptorVariance)
+
+    def __len__(self):
+        return len(self.postneurons)
+
+    def __str__(self):
+        layerDecription = ''
+        for neuronIx, neuron in enumerate(self.postneurons):
+            layerDecription = layerDecription + 'Neuron ' + str(neuronIx) + ':\n' + str(neuron)
+        return layerDecription
+
+    # perform one time step for an input layer or an inner layer of the neural network
+    # inhibits other neurons in the same layer after a spike arrived
+    # needs the neurons of the preceding layer to run: preneurons
+    # Biases are injectable Potentials, e.g. to produce a desired output
+    # ignorePreneurons regulates if the bias is combined with the normal activity (False) or
+    # becomes the only input for the postneurons (True)
+    def step(self, preneurons, learning = True, exitatoryBiases = None, ignorePreneurons = False):
+
+        if (exitatoryBiases is None):
+            ignorePreneurons = False
+
+        if not (exitatoryBiases is None):
+            if len(exitatoryBiases) != len(self.postneurons):
+                msg = 'Postneurons have length ' + str(len(self.postneurons)) + \
+                      ', but postneural exitory bias have length ' + str(len(exitatoryBiases)) #str(exitatoryBiases.shape)
+                raise err.InputPotentialError(msg)
+
+        # TODO these functions could be executed in parallel
+        self.excitatoryMatrix = self.excitatoryMatrix.triggerIfAdequat(preneurons)
+        self.lateralInhibitoryMatrix = self.lateralInhibitoryMatrix.triggerIfAdequat(self.postneurons)
+
+        if learning: # collecting the learning indicators
+            self.excitatoryMatrix = self.excitatoryMatrix.triggerPostSynapseMatrixIfAdequat(self.postneurons)
+            self.lateralInhibitoryMatrix = self.lateralInhibitoryMatrix.triggerPostSynapseMatrixIfAdequat(
+                self.postneurons)
+
+        # calculating the synapse dynamics
+        self.excitatoryMatrix = self.excitatoryMatrix.step()
+        self.lateralInhibitoryMatrix = self.lateralInhibitoryMatrix.step()
+
+        # TODO loop could be run in parallel
+        for postNeuronIndex in range(0, len(self.postneurons)):
+            postExitoryPotential, self.excitatoryMatrix = \
+                self.excitatoryMatrix.integrateInputPotentialOf(postNeuronIndex)
+#            postInhibitoryPotential, self.inhibitoryMatrix = \
+ #               self.inhibitoryMatrix.integrateInputPotentialOf(postNeuronIndex)
+            additionalPostInhibitoryPotential, self.lateralInhibitoryMatrix = \
+                self.lateralInhibitoryMatrix.integrateInputPotentialOf(postNeuronIndex)
+            postInhibitoryPotential = additionalPostInhibitoryPotential # postInhibitoryPotential +
+
+            if not (exitatoryBiases is None):
+                if ignorePreneurons:
+                    postExitoryPotential = exitatoryBiases[postNeuronIndex]
+                else:
+                    postExitoryPotential = postExitoryPotential + exitatoryBiases[postNeuronIndex]
+
+ #           if not (inhibitoryBiases is None):
+  #              if ignorePreneurons:
+   #                 postInhibitoryPotential = inhibitoryBiases[postNeuronIndex]
+    #            else:
+     #               postInhibitoryPotential = postInhibitoryPotential + inhibitoryBiases[postNeuronIndex]
+
+            pivotNeuron = self.postneurons[postNeuronIndex]
+            self.postneurons[postNeuronIndex] = pivotNeuron.step(postExitoryPotential, postInhibitoryPotential)
+        # self.postneurons is the input for the next layer
+        return self
+
 
 
 '''

@@ -23,9 +23,9 @@ print('Timesteps per example: T=', T)
 network = net.Network()
 inputLayer = l.InputLayer(inputSize)
 network.addLayer(inputLayer)
-hiddenLayer = l.LateralInhibitoryLayer(6)
+hiddenLayer = l.DuoLateralInhibitoryLayer(6)
 network.addLayer(hiddenLayer)
-outputLayer = l.LateralInhibitoryLayer(outputSize)
+outputLayer = l.DuoLateralInhibitoryLayer(outputSize)
 network.addLayer(outputLayer)
 
 adjustments = []

@@ -17,10 +17,10 @@ networkHistory = []
 network = net.Network()
 inputLayer = L.InputLayer(inputSize)
 network.addLayer(inputLayer)
-outputLayer = L.LateralInhibitoryLayer(outputSize, excitatoryTransmitterExpectation=5200, excitatoryTransmitterVariance=0,
-              excitatoryReceptorExpectation=1600, excitatoryReceptorVariance=0,
-              inhibitoryTransmitterExpectation=3500, inhibitoryTransmitterVariance=0,
-              inhibitoryReceptorExpectation=1000, inhibitoryReceptorVariance=0)
+outputLayer = L.DuoLateralInhibitoryLayer(outputSize, excitatoryTransmitterExpectation=5200, excitatoryTransmitterVariance=0,
+                                          excitatoryReceptorExpectation=1600, excitatoryReceptorVariance=0,
+                                          inhibitoryTransmitterExpectation=3500, inhibitoryTransmitterVariance=0,
+                                          inhibitoryReceptorExpectation=1000, inhibitoryReceptorVariance=0)
 network.addLayer(outputLayer)
 
 for difference in range(int(-(calculations / 2)), int(calculations / 2)):

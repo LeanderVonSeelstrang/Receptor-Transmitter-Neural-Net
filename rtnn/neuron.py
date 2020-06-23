@@ -2,8 +2,21 @@ import numpy as np
 
 from . import synapse as s # the two classes are technically independent, but I did not want to write one function twice
 
-SPIKING_THRESHHOLD = 150
-ACTION_POTENTIAL_VALUE = 600
+from . import hyperparameters as hyperparameters
+
+# neuron hyperparameters
+SPIKING_THRESHHOLD = hyperparameters.SPIKING_THRESHHOLD #150
+ACTION_POTENTIAL_VALUE = hyperparameters.ACTION_POTENTIAL_VALUE #600
+REFRACTORY_TIME = hyperparameters.REFRACTORY_TIME #9
+
+EXPECTED_NEURON_LEAK = hyperparameters.EXPECTED_NEURON_LEAK #3
+VARIANCE_LEAK = hyperparameters.VARIANCE_LEAK #1
+
+EXPECTED_INHIBITION_LEAK = hyperparameters.EXPECTED_INHIBITION_LEAK #2
+VARIANCE_INHIBITION_LEAK = hyperparameters.VARIANCE_INHIBITION_LEAK #2
+
+EXPECTED_MAXIMAL_INHIBITION = hyperparameters.EXPECTED_MAXIMAL_INHIBITION #SPIKING_THRESHHOLD * 2
+VARIANCE_MAXIMAL_INHIBITION = hyperparameters.VARIANCE_MAXIMAL_INHIBITION #2
 
 # Initialize Neuron.
 def initNeuron(exitoryInCellCount0, inhibitoryInCellCount0, remainingRefractoryTime0, spiking0, numberOfSpikes0,
@@ -21,11 +34,14 @@ class Neuron:
                                  numberOfSpikes0, timeSinceLastSpike0,
                                  recentActivity0, highlyActiveTime0, noActionTime0)
         self.isSpiking = self.neuron[3]
-        self.neuronParameters = sampleNeuronParameters(expectedLeak=2, varianceLeak=1,
-                                                       expectedMaximalInhibition=SPIKING_THRESHHOLD*2, #randomly chosen
-                                                       varianceMaximalInhibition=2, expectedInhibitionLeak=2,
-                                                       varianceInhibitionLeak=2, spikingThreshold=SPIKING_THRESHHOLD,
-                                                       actionPotentialValue=ACTION_POTENTIAL_VALUE, refractoryTime=9)
+        self.neuronParameters = sampleNeuronParameters(expectedLeak=EXPECTED_NEURON_LEAK, varianceLeak=VARIANCE_LEAK,
+                                                       expectedMaximalInhibition=EXPECTED_MAXIMAL_INHIBITION,
+                                                       varianceMaximalInhibition=VARIANCE_MAXIMAL_INHIBITION,
+                                                       expectedInhibitionLeak=EXPECTED_INHIBITION_LEAK,
+                                                       varianceInhibitionLeak=VARIANCE_INHIBITION_LEAK,
+                                                       spikingThreshold=SPIKING_THRESHHOLD,
+                                                       actionPotentialValue=ACTION_POTENTIAL_VALUE,
+                                                       refractoryTime=REFRACTORY_TIME)
 
     def step(self,newExitoryInputPotential, newInhibitoryInputPotential):
         self.neuron = exitoryInhibitoryNeuronDynamics(newExitoryInputPotential, newInhibitoryInputPotential,

@@ -21,13 +21,15 @@ print('Simulating until T=', T)
 network = net.Network()
 inputLayer = l.InputLayer(inputSize)
 network.addLayer(inputLayer)
-hiddenLayer = l.LateralInhibitoryLayer(5)
+
+hiddenLayer = l.DuoLateralInhibitoryLayer(5)
 network.addLayer(hiddenLayer)
-hiddenLayer2 = l.LateralInhibitoryLayer(5)
+hiddenLayer2 = l.DuoLateralInhibitoryLayer(5)
 network.addLayer(hiddenLayer2)
-hiddenLayer3 = l.LateralInhibitoryLayer(5)
+hiddenLayer3 = l.DuoLateralInhibitoryLayer(5)
 network.addLayer(hiddenLayer3)
-outputLayer = l.LateralInhibitoryLayer(outputSize)
+
+outputLayer = l.DuoLateralInhibitoryLayer(outputSize)
 network.addLayer(outputLayer)
 
 #min p for T = 1500: 0.008

@@ -16,7 +16,7 @@ def visualizeNeuronPotentials(network, neuronHistory):
 
     t = np.linspace(0, len(neuronHistory), len(neuronHistory))
     fig, axs = plt.subplots(numberLayers, maxNeuronsPerLayer,
-                            sharex='all', sharey='all', figsize=(maxNeuronsPerLayer, numberLayers))
+                            sharex='all', sharey='all', figsize=(maxNeuronsPerLayer * 2, numberLayers * 2))
 
     for layerIx, layer in enumerate(network.layers):
         for neuronId in range(numNeurons[layerIx,1]):
@@ -41,20 +41,28 @@ def visualizeNeuronPotentials(network, neuronHistory):
                 line1, = axs[layerIx, neuronId].plot(t, excitatoryData, dashes=[6, 2], label='Neuron Potential')
                 line2, = axs[layerIx, neuronId].plot(t, inhibitoryData, dashes=[4, 2, 8, 3], label='Neuron Inhibition')
                 axs[layerIx, neuronId].set_ylabel('potential')
-                axs[layerIx, neuronId].legend()
+              #  axs[layerIx, neuronId].legend()
 
                 if neuronId == numNeurons[layerIx,1]:
                     axs[layerIx, neuronId].set_xlabel('time')
+
+                if layerIx == 0 and neuronId == 0:
+                    axs[layerIx, neuronId].legend()
 
             else: # there is only one neuron in this layer
                 axs[layerIx].set_title(title)
                 line1, = axs[layerIx].plot(t, excitatoryData, dashes=[6, 2], label='Neuron Potential')
                 line2, = axs[layerIx].plot(t, inhibitoryData, dashes=[4, 2, 8, 3], label='Neuron Inhibition')
                 axs[layerIx].set_ylabel('potential')
-                axs[layerIx].legend()
+              #  axs[layerIx].legend()
 
                 if neuronId == numNeurons[layerIx,1]:
                     axs[layerIx].set_xlabel('time')
+
+                if layerIx == 0 and neuronId == 0:
+                    axs[layerIx].legend()
+
+
    # plt.show()
 
 
@@ -69,7 +77,7 @@ def visualizeSynapseMatrix(synapseMatrixHistory, title=""):
     acceptedTransmitterCounts = np.zeros((noPre, noPost, len(synapseMatrixHistory)))
 
     t = np.linspace(0, len(synapseMatrixHistory), len(synapseMatrixHistory))
-    fig, axs = plt.subplots(noPre, noPost, sharex='all', sharey='all', figsize=(noPost, noPre))
+    fig, axs = plt.subplots(noPre, noPost, sharex='all', sharey='all', figsize=(noPost * 2, noPre * 2))
 
     fig.suptitle(title)
 
@@ -128,8 +136,11 @@ def visualizeNetwork(networkHistory, visualizeSynapses = True, visualizeNeurons 
             for layerId, layer in enumerate(iterLayers):
                 # TODO check which kind of layer is to be visualized
                 excitatoryMatrixHistory[layerId,time] = layer.excitatoryMatrix
-                inhibitoryMatrixHistory[layerId,time] = layer.inhibitoryMatrix
                 lateralInhibitoryMatrixHistory[layerId,time] = layer.lateralInhibitoryMatrix
+
+                if (isinstance(layer, L.DuoLateralInhibitoryLayer)):
+                    inhibitoryMatrixHistory[layerId, time] = layer.inhibitoryMatrix
+
 
     exampleNetwork = networkHistory[0]
     if visualizeNeurons:
@@ -141,8 +152,11 @@ def visualizeNetwork(networkHistory, visualizeSynapses = True, visualizeNeurons 
         next(iterLayers)  # skipping the first layer
         for layerId, layer in enumerate(iterLayers):
             visualizeSynapseMatrix(excitatoryMatrixHistory[layerId], 'Layer ' + str(layerId) + ': Excitatory Synapses')
-            visualizeSynapseMatrix(inhibitoryMatrixHistory[layerId], 'Layer ' + str(layerId) + ': Inhibitory Synapses')
             visualizeSynapseMatrix(lateralInhibitoryMatrixHistory[layerId], 'Layer ' + str(layerId) + ': lateral Inhibitory Synapses')
+
+            if (isinstance(layer, L.DuoLateralInhibitoryLayer)):
+                visualizeSynapseMatrix(inhibitoryMatrixHistory[layerId],
+                                       'Layer ' + str(layerId) + ': Inhibitory Synapses')
 
     plt.show()
 

@@ -1,7 +1,32 @@
 import numpy as np
 import random
 
-MAX_CLIFT_TRANSMITTER_COUNT = 60000 #500000 #130000
+from . import hyperparameters as hyperparameters
+
+
+MAX_CLIFT_TRANSMITTER_COUNT = hyperparameters.MAX_CLIFT_TRANSMITTER_COUNT #60000 #500000 #130000
+
+COLLISION_SPEED = hyperparameters.COLLISION_SPEED #0.00001386294361119890618834464242916353136151
+RECEPTOR_BUILD_SPEED = hyperparameters.RECEPTOR_BUILD_SPEED #0.00897309
+TRANSMITTER_BUILD_SPEED = hyperparameters.TRANSMITTER_BUILD_SPEED #0.000002351386294361119890618834464242916353136151
+EXPONENTIAL_CLIFT_LEAK_SPEED = hyperparameters.EXPONENTIAL_CLIFT_LEAK_SPEED #0.004
+
+TIME_DIFFERENCE_SENSITIVITY_LEARNING_SIGNAL = hyperparameters.TIME_DIFFERENCE_SENSITIVITY_LEARNING_SIGNAL #0.00005138629
+
+RELEASE_PERCENTAGE = hyperparameters.RELEASE_PERCENTAGE #0.1
+
+LINEAR_CLIFT_LEAK = hyperparameters.LINEAR_CLIFT_LEAK #3
+
+
+# basically irrelevant - just to ensure definition
+# see Layers.py 
+EXPECTED_MAXIMAL_RECEPTOR_COUNT = 1200
+VARIANCE_MAXIMAL_RECEPTOR_COUNTI = 103
+
+EXPECTED_MAX_TRANSMITTERCOUNT = 3500
+VARIANCE_MAX_TRANSMITTERCOUNT = 101
+
+
 
 def getState(syn):
     return syn.synapse
@@ -15,26 +40,46 @@ def resetAcceptedTransmitters(syn):
     syn.synapse[3] = 0
     return syn
 
-def getHyperparameters(maxOfMaxVesicles, maxOfMaxReceptors, minOfMaxVesicles, minOfMaxReceptors):
-    return np.array([maxOfMaxVesicles, maxOfMaxReceptors, minOfMaxVesicles, minOfMaxReceptors])
+#def getHyperparameters(maxOfMaxVesicles, maxOfMaxReceptors, minOfMaxVesicles, minOfMaxReceptors):
+ #   return np.array([maxOfMaxVesicles, maxOfMaxReceptors, minOfMaxVesicles, minOfMaxReceptors])
+
+
+# Initialize a synapse. Holds the current state of the synapse.
+def initSynapse(transVetrikel0, transGap0, rezeptor0, transPost0, releasePercentage0, substanceA0, substanceB0,
+                substanceC0, accumulatedLeak):
+    learningIndicators = np.array([substanceA0, substanceB0, substanceC0, accumulatedLeak])
+    return np.array([transVetrikel0, transGap0, rezeptor0, transPost0, releasePercentage0, learningIndicators])
 
 
 class Synapse:
-    def __init__(self, expectedMaximalTransmitterCount0=3500,varianceMaximalTransmitterCount0=100,
-                 expectedMaximalRezeptorCount0=1200, varianceMaximalRezeptorCount0=100, linearCliftLeak=3,
+
+    '''
+    A synapse transmitts information from one neuron to another neuron via chemical transmitter substances.
+
+    Different parameters can be modulated:
+    A preneuron can decide how many transmitters are released into the synaptic clift.
+    A postneuron can decide how much information is accepted by modulating the number of corresponding receptors.
+    '''
+
+    def __init__(self, expectedMaximalTransmitterCount0=EXPECTED_MAX_TRANSMITTERCOUNT,
+                 varianceMaximalTransmitterCount0=VARIANCE_MAX_TRANSMITTERCOUNT,
+                 expectedMaximalRezeptorCount0=EXPECTED_MAXIMAL_RECEPTOR_COUNT,
+                 varianceMaximalRezeptorCount0=VARIANCE_MAXIMAL_RECEPTOR_COUNTI,
+                 linearCliftLeak=LINEAR_CLIFT_LEAK,
                  defaultReleasePercentage=None,
-                 transVetrikel0=1, transGap0=0, rezeptor0=1, transPost0=0, releasePercentage0=0.1,
-                 substanceA0=0, substanceB0=0, substanceC0=0):
+                 releasePercentage0=RELEASE_PERCENTAGE,
+                 transVetrikel0=1, transGap0=0, rezeptor0=1, transPost0=0,
+                 substanceA0=0, substanceB0=0, substanceC0=0, accumulatedLeak=0):
         self.synapse = initSynapse(transVetrikel0, transGap0, rezeptor0, transPost0, releasePercentage0,
-                                   substanceA0, substanceB0, substanceC0)
+                                   substanceA0, substanceB0, substanceC0, accumulatedLeak)
         self.synapseParameters = sampleSynapseParameters(expectedMaximalTransmitterCount0,
                                                          varianceMaximalTransmitterCount0,
                                                          expectedMaximalRezeptorCount0,
                                                          varianceMaximalRezeptorCount0,
                                                          linearCliftLeak,
                                                          defaultReleasePercentage)
-        self.sndOrderParameters = getHyperparameters(maxOfMaxVesicles=15000, maxOfMaxReceptors=12000,
-                                                     minOfMaxVesicles=0, minOfMaxReceptors=0)
+  #      self.sndOrderParameters = getHyperparameters(maxOfMaxVesicles=15000, maxOfMaxReceptors=12000,
+   #                                                  minOfMaxVesicles=0, minOfMaxReceptors=0)
 
     def step(self):
         self.synapse = synapseStep(self.synapseParameters, self.synapse)
@@ -77,7 +122,7 @@ class Synapse:
     # returns a synapse with adjusted learningIndicators
     def receivePostsynapticSpike(self, staticSubstanceAPool=200, staticSubstanceCPool=200):
         t, g, freeReceptors, i, relativeRecentActivity, learningIndicators = self.synapse
-        substanceA0, substanceB0, substanceC0 = learningIndicators
+        substanceA0, substanceB0, substanceC0, accumulatedLeak = learningIndicators
         kTransBuild, vetrikelMax, kRezeptorRebuild, rezeptorMax, \
         kCollision, cliftLeakSpeed, linearCliftLeak, defaultReleasePercentage = self.synapseParameters
         relativeAmountFreeReceptors = freeReceptors / rezeptorMax
@@ -132,12 +177,6 @@ class Synapse:
                 'Receptor build speed: ' + str(self.synapseParameters[2]) + '\n' +
                 'Transmitter-Receptor coupling rate: ' + str(self.synapseParameters[4]) + '\n\n\n')
 
-
-# Initialize a synapse. Holds the current state of the synapse.
-def initSynapse(transVetrikel0, transGap0, rezeptor0, transPost0, releasePercentage0, substanceA0, substanceB0,
-                substanceC0):
-    learningIndicators = np.array([substanceA0, substanceB0, substanceC0])
-    return np.array([transVetrikel0, transGap0, rezeptor0, transPost0, releasePercentage0, learningIndicators])
 
 
 # -------------------------Synapse Dynamics---------------------------------------
@@ -249,13 +288,17 @@ def linearSynapseCliftLeak(synapticLeak, synapse):
 # the leak is faster the more transmitters are in the gap
 # this introduces a soft maximum
 def synapseCliftLeak(leakSpeed, synapse, minimum = 0):
-    t, gapTransmitterCount, r, i, rp, li = synapse
+    t, gapTransmitterCount, r, i, rp, learningIndicators = synapse
     ngt = np.exp(-leakSpeed) * (gapTransmitterCount - minimum) + minimum
     if random.randint(0, 1):
         synapse[1] = np.ceil(ngt)
+        learningIndicators[3] = learningIndicators[3] + (gapTransmitterCount - np.ceil(ngt))
+        synapse[5] = learningIndicators
         return synapse
     else:
         synapse[1] = np.floor(ngt)
+        learningIndicators[3] = learningIndicators[3] + (gapTransmitterCount - np.floor(ngt))
+        synapse[5] = learningIndicators
         return synapse
 
 # calculates one step of synapse dynamics given a set of parameters
@@ -333,11 +376,11 @@ def sampleSynapseParameters(expectedMaximalTransmitterCount=2300, varianceMaxima
         defaultReleasePercentage = np.random.uniform(0.05, 0.35)
     # TODO figure out a way to calibrate all those speeds
 
-    kTransBuild = 0.000002351386294361119890618834464242916353136151
-    kRezeptorRebuild = 0.00897309  # 0.007309 #0.006309 #0.0046109
-    kCollision = 0.00001386294361119890618834464242916353136151
+    kTransBuild = TRANSMITTER_BUILD_SPEED
+    kRezeptorRebuild = RECEPTOR_BUILD_SPEED  # 0.007309 #0.006309 #0.0046109
+    kCollision = COLLISION_SPEED
 
-    cliftLeakSpeed = 0.004 #0.00001#0.095
+    cliftLeakSpeed = EXPONENTIAL_CLIFT_LEAK_SPEED  #0.00001#0.095
     linearCliftLeak = linearCliftLeak
 
     #kTransBuild = 0.00001386294361119890618834464242916353136151
@@ -378,11 +421,12 @@ def sampleSynapseParameters(expectedMaximalTransmitterCount=2300, varianceMaxima
 # returns new values for substance A, transmitter and substance B
 # returns the next synapse state
 # k corresponds to the time difference sensitivity
-def collisionDynamicsLearningIndicatorsAtoB(synapse, timeDifferenceSensitivity=0.00005138629):  # 0.0000138629):
+def collisionDynamicsLearningIndicatorsAtoB(synapse,
+                                            timeDifferenceSensitivity=TIME_DIFFERENCE_SENSITIVITY_LEARNING_SIGNAL):  # 0.0000138629):
     learningAffectsInformationTransfer = True
     k = timeDifferenceSensitivity
     t, trans0, r, i, rp, learningIndicators = synapse
-    substanceA0, substanceB0, substanceC0 = learningIndicators
+    substanceA0, substanceB0, substanceC0, accumulatedLeak = learningIndicators
 
     # model the concentration of transmitters for one time step
     transCountNumerator = (trans0 * (trans0 - substanceA0) * np.exp((trans0 - substanceA0) * k * 1))
@@ -420,7 +464,7 @@ def collisionDynamicsLearningIndicatorsAtoB(synapse, timeDifferenceSensitivity=0
 # models the exponential leak of substance A until it reaches zero
 def substanceALeak(synapse, leakSpeed=0.02):
     t, trans0, r, i, rp, learningIndicators = synapse
-    substanceA0, substanceB0, substanceC0 = learningIndicators
+    substanceA0, substanceB0, substanceC0, accumulatedLeak = learningIndicators
     substanceA = np.round(np.exp(-leakSpeed) * (substanceA0))
 
     learningIndicators[0] = substanceA
