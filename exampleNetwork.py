@@ -30,8 +30,6 @@ network.addLayer(hiddenLayer3)
 outputLayer = l.LateralInhibitoryLayer(outputSize)
 network.addLayer(outputLayer)
 
-#min p for T = 1500: 0.008
-#max p for T = 1500: 0.5
 
 timeBiases = iu.makeTimeBiases(outputLayer,
                                excitatoryBiasesT=iu.poissonDistributedSpikeTrain(T, len(outputLayer), [0.6, 0.55, 0.5]),
