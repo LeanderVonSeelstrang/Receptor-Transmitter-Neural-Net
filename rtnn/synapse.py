@@ -81,6 +81,11 @@ class Synapse:
   #      self.sndOrderParameters = getHyperparameters(maxOfMaxVesicles=15000, maxOfMaxReceptors=12000,
    #                                                  minOfMaxVesicles=0, minOfMaxReceptors=0)
 
+    def getLearningSignals(self):
+        synapse = self.synapse
+        learningSignals = synapse[]
+        return learningSignals
+
     def step(self):
         self.synapse = synapseStep(self.synapseParameters, self.synapse)
         return self
